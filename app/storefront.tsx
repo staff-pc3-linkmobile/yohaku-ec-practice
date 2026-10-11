@@ -46,6 +46,10 @@ export default function Storefront() {
     [receipt, setReceipt] = useState<Order | null>(null),
     [orders, setOrders] = useState<Order[]>([]),
     [practice, setPractice] = useState<PracticeMode>("normal");
+  const [cartStatus, setCartStatus] = useState("");
+  const cartSave = useRef<Promise<void>>(Promise.resolve());
+  const cartError = useRef(false);
+  const initialized = useRef(false);
   const key = useRef(""),
     dialog = useRef<HTMLDialogElement>(null);
   async function refresh() {
@@ -69,28 +73,60 @@ export default function Storefront() {
     }
   }
   useEffect(() => {
-    void refresh();
-    try {
-      const saved = JSON.parse(localStorage.getItem("yohaku-cart") || "[]");
-      if (Array.isArray(saved))
-        setCart(
-          saved
-            .filter(
-              (x: CartLine) =>
-                x &&
-                typeof x.productId === "string" &&
-                Number.isInteger(x.quantity) &&
-                x.quantity > 0 &&
-                x.quantity <= 10,
-            )
-            .slice(0, 6),
-        );
-    } catch {}
-    setReady(true);
+    if (initialized.current) return;
+    initialized.current = true;
+    async function initialize() {
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const token = fragment.get("continue");
+      // Remove the secret before any request, link navigation or clipboard action.
+      if (token !== null) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      try {
+        if (token !== null) {
+          const r = await fetch("/api/learning-link", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({action:"resume", token}),
+          });
+          if (!r.ok) { setLoadError("学習URLが無効か、期限が切れています。元のPCで新しいURLを作ってください。"); return; }
+          setCartStatus("学習の続きを開きました。ログインは不要です。");
+        }
+        const session = await fetch("/api/session", {method:"POST", cache:"no-store"});
+        if (!session.ok) throw Error();
+        const saved = await fetch("/api/cart", {cache:"no-store"});
+        if (!saved.ok) throw Error();
+        const data = await saved.json() as {items:CartLine[] | null};
+        let items = data.items;
+        if (items === null && token === null) {
+          try {
+            const legacy = JSON.parse(localStorage.getItem("yohaku-cart") || "[]");
+            if (Array.isArray(legacy)) items = legacy.filter((x:CartLine) => x && typeof x.productId === "string" && Number.isInteger(x.quantity) && x.quantity > 0 && x.quantity <= 10).slice(0,6);
+            localStorage.removeItem("yohaku-cart");
+          } catch {}
+        }
+        setCart(items || []);
+        await refresh();
+        setReady(true);
+      } catch { setLoadError("学習データを読み込めませんでした。再読み込みしてください。"); }
+    }
+    void initialize();
   }, []);
   useEffect(() => {
-    if (ready) localStorage.setItem("yohaku-cart", JSON.stringify(cart));
+    if (!ready) return;
+    const items = cart;
+    // Serialize this browser's writes so a slower response cannot restore an older cart.
+    cartSave.current = cartSave.current.then(async () => {
+      setCartStatus("カートを保存中…");
+      try {
+        const r = await fetch("/api/cart", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items})});
+        if (!r.ok) throw Error();
+        cartError.current = false;
+        setCartStatus("カート保存済み · 学習URLで別PCへ引き継げます");
+      } catch { cartError.current = true; setCartStatus("カートを保存できませんでした。再読み込み前に数量を変更して再保存してください。"); }
+    });
   }, [cart, ready]);
+  async function beforeShare() {
+    await cartSave.current;
+    if (!ready || cartError.current) throw Error();
+  }
   useEffect(() => {
     if (panel) {
       dialog.current?.showModal();
@@ -314,7 +350,7 @@ export default function Storefront() {
           {loadError ? (
             <div className="empty">
               <p role="alert">{loadError}</p>
-              <button className="primary" onClick={() => void refresh()}>
+              <button className="primary" onClick={() => window.location.reload()}>
                 再読み込み
               </button>
             </div>
@@ -362,7 +398,7 @@ export default function Storefront() {
                       <button
                         onClick={() => add(p)}
                         disabled={
-                          !p.stock ||
+                          !ready || !p.stock ||
                           (cart.find((l) => l.productId === p.id)?.quantity ||
                             0) >= Math.min(10, p.stock ?? 0)
                         }
@@ -396,7 +432,7 @@ export default function Storefront() {
         >
           学習・運用 <ArrowUpRight size={13} />
         </button>
-        <span>DEMO STORE / V1.2</span>
+        <span>DEMO STORE / V1.3</span>
       </footer>
       <dialog
         ref={dialog}
@@ -436,7 +472,7 @@ export default function Storefront() {
               </div>
               <button
                 className="primary full"
-                disabled={!selected.stock}
+                disabled={!ready || !selected.stock}
                 onClick={() => add(selected)}
               >
                 カートに入れる <ShoppingBag size={17} />
@@ -615,7 +651,8 @@ export default function Storefront() {
                   ページを開き直して注文履歴を確認。画面の裏で情報が保存される様子を体験します。
                 </p>
               </div>
-              <Training mode={practice} onChange={refresh} />
+              <p className="muted" role="status">{cartStatus}</p>
+              <Training mode={practice} onChange={refresh} beforeShare={beforeShare} />
               <div className="lesson">
                 <b>次回：在庫・二重注文の調査</b>
                 <p>

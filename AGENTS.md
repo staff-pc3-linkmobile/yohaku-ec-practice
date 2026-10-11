@@ -4,6 +4,7 @@
 - 初学者。コードを書く量より意味の理解を優先。専門用語はお店に例えて説明する。
 - 2026-10-11の最新依頼で、ECサイトとGitHubをpublicへ変更。誰でもURLからバグ練習できる。現在のpublicを維持する。
 - 実決済・実発送・カード情報登録は不要。
+- 別PCでもログイン不要で同じ学習を継続したい。学習・運用の専用URLで引き継ぐ。GitHubの共同編集者追加は正確なアカウント名が判明してから行う。
 - GitHubは最新の明示依頼に従いpublic。元のmainへのpushは権限を持つユーザーだけ。
 
 ## 公開先・ソース
@@ -26,7 +27,8 @@
 - 意図的なバグは明示的に指定された練習だけで有効化し、正常に戻せる操作を残す。
 - 検証: `tsc --noEmit`、`node scripts/check-commerce.mjs`、`node scripts/check-practice.mjs`、`node scripts/check-public.mjs`（ローカル5173起動・DB準備済みが必要）。いずれも練習注文を作る。
 - コードを変えたら本番用buildを実行してpublic公開する。公開時はローカルDB・認証情報・node_modulesを含めない。
-- 注文・練習設定・practice_inventoryは利用者別。ゲストはブラウザー別、ログイン中は同じアカウントで別PC共有。カートはブラウザー内だけ。
+- 注文・練習設定・practice_inventory・learning_cartsは学習ノート別。learning_linksで90日期限の専用URLを発行する。DBに合鍵の平文を保存しない。URLフラグメントは読み取り後すぐ除去、同一origin POSTでHttpOnly Cookieへ交換する。getVisitorでは明示的に選んだ学習URLのノートを優先する。
+- `node scripts/check-learning-link.mjs` でログインなし引き継ぎと分離も確認する。GitHub権限はアカウント単位。誰でも匿名pushできるようには変更しない。
 
 ## Windowsの公式パッケージ処理
 - NodeとGit Bashはインストール済みの適切な実行ファイルをPATHに置く。このPC固有のパスを別PCで流用しない。

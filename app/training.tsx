@@ -4,13 +4,36 @@ import type { PracticeMode } from "../lib/commerce";
 export default function Training({
   mode,
   onChange,
+  beforeShare,
 }: {
   mode: PracticeMode;
   onChange: () => Promise<void>;
+  beforeShare: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [condition, setCondition] = useState(">=");
+  const [resumeUrl, setResumeUrl] = useState("");
+  async function createLink() {
+    setBusy(true);
+    setMessage("");
+    try {
+      await beforeShare();
+      const r = await fetch("/api/learning-link", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"create"}),
+      });
+      if (!r.ok) throw Error();
+      const data = await r.json() as {fragment:string};
+      setResumeUrl(window.location.origin + "/" + data.fragment);
+      setMessage("続きから開くURLを作りました。別PCで開くと、同じ学習の続きになります。");
+    } catch { setMessage("引き継ぎURLを作れませんでした。保存を確認してもう一度お試しください。"); }
+    finally { setBusy(false); }
+  }
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(resumeUrl); setMessage("URLをコピーしました。別PCのブラウザーで開いてください。"); }
+    catch { setMessage("下のURL欄を選択してコピーしてください。"); }
+  }
   async function save(next: PracticeMode) {
     setBusy(true);
     setMessage("");
@@ -42,15 +65,18 @@ export default function Training({
         </span>
       </div>
       <p className="detail-description">
-        ログインせずに練習できます。在庫・設定・注文履歴は利用者ごとに分かれます。ゲストの続きはこのブラウザーで保存され、Cookieを消すと引き継げません。
+        ログイン不要です。下の「続きから開くURL」を別PCで開くと、注文履歴・在庫・バグ設定・カートを引き継げます。
       </p>
-      <a
-        className="text-button full"
-        href="/signin-with-chatgpt?return_to=%2F"
-        target="_top"
-      >
-        ChatGPTでログインして別PCと共有
-      </a>
+      <button className="secondary full" disabled={busy} onClick={() => void createLink()}>
+        {busy ? "保存中…" : "続きから開くURLを作る"}
+      </button>
+      {resumeUrl && <>
+        <label className="input-label">別PCで開く学習URL
+          <input readOnly value={resumeUrl} onFocus={e => e.target.select()} />
+        </label>
+        <button className="primary full" onClick={() => void copyLink()}>学習URLをコピー</button>
+      </>}
+      <p className="muted">このURLは学習ノートの合鍵です。持っている人は同じ練習を閲覧・修正できます。有効期限は作成から90日。別PCで変更したら、この画面を再読み込みしてください。</p>
       <ol className="training-steps">
         <li>「バグを起こす」を押す。</li>
         <li>
@@ -113,7 +139,7 @@ export default function Training({
         練習を終了して正常に戻す
       </button>
       <p className="muted">
-        変更するのは自分の練習だけです。過去の注文金額は書き換えません。別PCと共有したい場合は練習前にChatGPTでログインしてください。ゲストの記録はログイン後には移りません。
+        変更するのはこの学習ノートだけです。過去の注文金額は書き換えません。通常のストアURLだけでは別PCの続きは開けないため、専用の学習URLを保存してください。
       </p>
       {message && (
         <p className="feedback" role="status">

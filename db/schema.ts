@@ -7,6 +7,16 @@ import {
   primaryKey,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+export const learningLinks = sqliteTable("learning_links", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: text("user_id").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+});
+export const learningCarts = sqliteTable("learning_carts", {
+  userId: text("user_id").primaryKey(),
+  items: text("items").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
 export const practiceInventory = sqliteTable(
   "practice_inventory",
   {
