@@ -38,6 +38,7 @@ async function api(path, body) {
   return { status: r.status, body: await r.json() };
 }
 assert.equal((await fetch(base + "/api/products")).status, 401);
+await api("/api/practice", { mode: "normal" });
 assert.equal((await fetch(base + "/api/orders")).status, 401);
 assert.equal(
   (await fetch(base + "/api/inventory", { method: "POST" })).status,

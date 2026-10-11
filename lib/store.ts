@@ -1,5 +1,16 @@
 import { env } from "cloudflare:workers";
 import { catalog } from "./catalog";
+import type { PracticeMode } from "./commerce";
+export async function loadPractice(
+  db: D1Database,
+  userId: string,
+): Promise<PracticeMode> {
+  const row = await db
+    .prepare("SELECT mode FROM practice_settings WHERE user_id=?")
+    .bind(userId)
+    .first<{ mode: string }>();
+  return row?.mode === "shipping-boundary" ? "shipping-boundary" : "normal";
+}
 export function database(): D1Database {
   const db = (env as unknown as { DB?: D1Database }).DB;
   if (!db) throw new Error("DATABASE_UNAVAILABLE");

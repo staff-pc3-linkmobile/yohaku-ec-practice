@@ -1,5 +1,8 @@
 export type CartLine = { productId: string; quantity: number };
-export const shippingFor = (subtotal: number) => (subtotal >= 5000 ? 0 : 500);
+export type PracticeMode = "normal" | "shipping-boundary";
+// In training, switch the actual comparison; the default remains correct.
+export const shippingFor = (subtotal: number, mode: PracticeMode = "normal") =>
+  (mode === "shipping-boundary" ? subtotal > 5000 : subtotal >= 5000) ? 0 : 500;
 export function validateCheckout(input: unknown): {
   customer: string;
   items: CartLine[];

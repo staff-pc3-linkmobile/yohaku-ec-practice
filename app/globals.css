@@ -1,4 +1,52 @@
 @import "tailwindcss";
+.training {
+  border-top: 1px solid #dfe2d5;
+  padding: 26px 0;
+  margin: 20px 0;
+}
+.training-steps {
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 2;
+  color: #737e67;
+}
+.training-steps li {
+  margin: 8px 0;
+}
+.cause {
+  border: 1px solid #dce1d3;
+  padding: 15px;
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.cause summary {
+  cursor: pointer;
+  color: #526443;
+}
+.cause p {
+  margin-top: 15px;
+}
+.cause pre {
+  background: #e9ecdf;
+  padding: 14px;
+  margin: 15px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.input-label select {
+  width: 100%;
+  border: 1px solid #d8dccd;
+  background: white;
+  color: #343b30;
+  padding: 13px;
+  margin-top: 9px;
+  font: inherit;
+}
+.training > .muted {
+  margin-top: 16px;
+}
 :root {
   font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
   color: #343b30;

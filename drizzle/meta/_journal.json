@@ -8,6 +8,13 @@
       "when": 1791698113621,
       "tag": "0000_neat_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791699251857,
+      "tag": "0001_green_shooting_star",
+      "breakpoints": true
     }
   ]
 }

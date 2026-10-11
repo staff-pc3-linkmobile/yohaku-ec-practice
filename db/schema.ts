@@ -6,6 +6,20 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+export const practiceSettings = sqliteTable(
+  "practice_settings",
+  {
+    userId: text("user_id").primaryKey(),
+    mode: text("mode").notNull().default("normal"),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    check(
+      "valid_practice_mode",
+      sql`${t.mode} IN ('normal', 'shipping-boundary')`,
+    ),
+  ],
+);
 export const products = sqliteTable(
   "products",
   {

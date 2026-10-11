@@ -1,5 +1,10 @@
 import { getChatGPTUser } from "../../chatgpt-auth";
-import { database, loadCatalog, loadOrder } from "../../../lib/store";
+import {
+  database,
+  loadCatalog,
+  loadOrder,
+  loadPractice,
+} from "../../../lib/store";
 import { validateCheckout, shippingFor } from "../../../lib/commerce";
 export async function GET() {
   const user = await getChatGPTUser();
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
       return { ...l, name: p.name, price: p.price };
     });
     const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0),
-      shipping = shippingFor(subtotal);
+      shipping = shippingFor(subtotal, await loadPractice(db, user.userId));
     const id = "YH-" + crypto.randomUUID().slice(0, 8).toUpperCase();
     const statements = [
       db

@@ -12,7 +12,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import type { Product } from "../lib/catalog";
-import { shippingFor, type CartLine } from "../lib/commerce";
+import { shippingFor, type CartLine, type PracticeMode } from "../lib/commerce";
+import Training from "./training";
 type Order = {
   id: string;
   customer: string;
@@ -43,14 +44,20 @@ export default function Storefront() {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [receipt, setReceipt] = useState<Order | null>(null),
-    [orders, setOrders] = useState<Order[]>([]);
+    [orders, setOrders] = useState<Order[]>([]),
+    [practice, setPractice] = useState<PracticeMode>("normal");
   const key = useRef(""),
     dialog = useRef<HTMLDialogElement>(null);
   async function refresh() {
     try {
       const r = await fetch("/api/products", { cache: "no-store" });
       if (!r.ok) throw Error();
-      setProducts(((await r.json()) as { products: Product[] }).products);
+      const data = (await r.json()) as {
+        products: Product[];
+        practice: PracticeMode;
+      };
+      setProducts(data.products);
+      setPractice(data.practice);
       setLoadError("");
     } catch {
       setLoadError("商品を読み込めませんでした。再読み込みしてください。");
@@ -90,7 +97,7 @@ export default function Storefront() {
     .filter((l) => l.product);
   const count = cart.reduce((s, l) => s + l.quantity, 0),
     subtotal = lines.reduce((s, l) => s + l.product!.price * l.quantity, 0),
-    shipping = shippingFor(subtotal);
+    shipping = shippingFor(subtotal, practice);
   function change(id: string, delta: number) {
     key.current = "";
     setCart((c) => {
@@ -208,7 +215,9 @@ export default function Storefront() {
   return (
     <>
       <div className="announcement">
-        自分専用の学習ストア · 実際の請求・発送はありません
+        {practice === "shipping-boundary"
+          ? "送料のバグ練習中 · 学習・運用から修正できます"
+          : "自分専用の学習ストア · 実際の請求・発送はありません"}
       </div>
       <header>
         <a href="/" className="brand" aria-label="余白ストア ホーム">
@@ -374,10 +383,15 @@ export default function Storefront() {
       </main>
       <footer>
         <span>© 2026 YOHAKU STORE</span>
-        <button onClick={() => setPanel("learning")}>
+        <button
+          onClick={() => {
+            void refresh();
+            setPanel("learning");
+          }}
+        >
           学習・運用 <ArrowUpRight size={13} />
         </button>
-        <span>DEMO STORE / V1.0</span>
+        <span>DEMO STORE / V1.1</span>
       </footer>
       <dialog
         ref={dialog}
@@ -596,12 +610,7 @@ export default function Storefront() {
                   ページを開き直して注文履歴を確認。画面の裏で情報が保存される様子を体験します。
                 </p>
               </div>
-              <div className="lesson">
-                <b>次回：送料の境界を調べる</b>
-                <p>
-                  5,000円ちょうどの注文は送料無料になる？「境目」は間違いが起こりやすい場所です。
-                </p>
-              </div>
+              <Training mode={practice} onChange={refresh} />
               <div className="lesson">
                 <b>次回：在庫・二重注文の調査</b>
                 <p>
