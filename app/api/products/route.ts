@@ -1,13 +1,12 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getVisitor } from "../../../lib/visitor";
 import { database, loadCatalog, loadPractice } from "../../../lib/store";
 export async function GET() {
-  const user = await getChatGPTUser();
-  if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  const user = await getVisitor();
   try {
     return Response.json(
       {
-        products: await loadCatalog(database()),
-        practice: await loadPractice(database(), user.userId),
+        products: await loadCatalog(database(), user?.userId),
+        practice: user ? await loadPractice(database(), user.userId) : "normal",
       },
       { headers: { "Cache-Control": "no-store" } },
     );

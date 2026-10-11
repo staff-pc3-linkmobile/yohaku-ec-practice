@@ -28,7 +28,7 @@ const errors: Record<string, string> = {
   INSUFFICIENT_STOCK: "在庫が変わりました。カートの数量を確認してください。",
   INVALID_INPUT: "お名前と数量を確認してください。",
   KEY_CONFLICT: "注文内容が変わりました。一度カートに戻ってください。",
-  UNAUTHORIZED: "ログインし直してください。",
+  UNAUTHORIZED: "ページを再読み込みして、練習を再開してください。",
   SERVICE_UNAVAILABLE:
     "注文を確認できませんでした。同じ内容のまま、もう一度お試しください。",
 };
@@ -50,6 +50,11 @@ export default function Storefront() {
     dialog = useRef<HTMLDialogElement>(null);
   async function refresh() {
     try {
+      const session = await fetch("/api/session", {
+        method: "POST",
+        cache: "no-store",
+      });
+      if (!session.ok) throw Error();
       const r = await fetch("/api/products", { cache: "no-store" });
       if (!r.ok) throw Error();
       const data = (await r.json()) as {
@@ -217,7 +222,7 @@ export default function Storefront() {
       <div className="announcement">
         {practice === "shipping-boundary"
           ? "送料のバグ練習中 · 学習・運用から修正できます"
-          : "自分専用の学習ストア · 実際の請求・発送はありません"}
+          : "公開の学習ストア · 実際の請求・発送はありません"}
       </div>
       <header>
         <a href="/" className="brand" aria-label="余白ストア ホーム">
@@ -391,7 +396,7 @@ export default function Storefront() {
         >
           学習・運用 <ArrowUpRight size={13} />
         </button>
-        <span>DEMO STORE / V1.1</span>
+        <span>DEMO STORE / V1.2</span>
       </footer>
       <dialog
         ref={dialog}
@@ -516,7 +521,7 @@ export default function Storefront() {
                   {panel === "checkout" ? (
                     <>
                       <label className="input-label">
-                        練習用のお名前
+                        練習用の呼び名（本名不要）
                         <input
                           maxLength={40}
                           value={customer}

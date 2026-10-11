@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "余白ストア | 毎日に、少しの余白を。",
-  description: "暮らしを整える小さな道具。自分専用のEC学習ストア。",
+  description: "暮らしを整える小さな道具。ログインせずに試せるEC学習ストア。",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

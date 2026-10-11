@@ -1,9 +1,9 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
-import { database, ensureCatalog } from "../../../lib/store";
+import { getVisitor } from "../../../lib/visitor";
+import { database, loadCatalog } from "../../../lib/store";
 import { catalog } from "../../../lib/catalog";
 export async function POST(request: Request) {
-  if (!(await getChatGPTUser()))
-    return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  const user = await getVisitor();
+  if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   if (
     request.headers.get("origin") &&
     request.headers.get("origin") !== new URL(request.url).origin
@@ -11,12 +11,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "FORBIDDEN" }, { status: 403 });
   try {
     const db = database();
-    await ensureCatalog(db);
+    await loadCatalog(db, user.userId);
     await db.batch(
       catalog.map((p) =>
         db
-          .prepare("UPDATE products SET stock=? WHERE id=?")
-          .bind(p.initialStock, p.id),
+          .prepare(
+            "UPDATE practice_inventory SET stock=? WHERE product_id=? AND user_id=?",
+          )
+          .bind(p.initialStock, p.id, user.userId),
       ),
     );
     return Response.json({ ok: true });

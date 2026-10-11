@@ -4,8 +4,23 @@ import {
   integer,
   check,
   uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+export const practiceInventory = sqliteTable(
+  "practice_inventory",
+  {
+    userId: text("user_id").notNull(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id),
+    stock: integer("stock").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.productId] }),
+    check("nonnegative_practice_stock", sql`${t.stock} >= 0`),
+  ],
+);
 export const practiceSettings = sqliteTable(
   "practice_settings",
   {

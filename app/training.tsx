@@ -42,8 +42,15 @@ export default function Training({
         </span>
       </div>
       <p className="detail-description">
-        どのPCでも、この画面から練習できます。設定と注文履歴はサーバーに保存されます。同じアカウントのほかのPCにも反映されます。
+        ログインせずに練習できます。在庫・設定・注文履歴は利用者ごとに分かれます。ゲストの続きはこのブラウザーで保存され、Cookieを消すと引き継げません。
       </p>
+      <a
+        className="text-button full"
+        href="/signin-with-chatgpt?return_to=%2F"
+        target="_top"
+      >
+        ChatGPTでログインして別PCと共有
+      </a>
       <ol className="training-steps">
         <li>「バグを起こす」を押す。</li>
         <li>
@@ -106,7 +113,7 @@ export default function Training({
         練習を終了して正常に戻す
       </button>
       <p className="muted">
-        変更するのは、これからの送料判定です。過去の注文金額は書き換えません。ほかのPCではページを再読み込みしてください。
+        変更するのは自分の練習だけです。過去の注文金額は書き換えません。別PCと共有したい場合は練習前にChatGPTでログインしてください。ゲストの記録はログイン後には移りません。
       </p>
       {message && (
         <p className="feedback" role="status">
@@ -122,7 +129,7 @@ export default function Training({
         target="_blank"
         rel="noreferrer"
       >
-        非公開のコードと引き継ぎ手順を開く ↗
+        公開のコードと引き継ぎ手順を開く ↗
       </a>
     </section>
   );

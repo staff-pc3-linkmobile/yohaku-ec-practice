@@ -15,6 +15,13 @@
       "when": 1791699251857,
       "tag": "0001_green_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791700149283,
+      "tag": "0002_famous_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

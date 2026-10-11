@@ -1,4 +1,4 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getVisitor } from "../../../lib/visitor";
 import {
   database,
   loadCatalog,
@@ -7,7 +7,7 @@ import {
 } from "../../../lib/store";
 import { validateCheckout, shippingFor } from "../../../lib/commerce";
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getVisitor();
   if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   try {
     const db = database();
@@ -30,7 +30,7 @@ export async function GET() {
   }
 }
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getVisitor();
   if (!user) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   if (
     request.headers.get("origin") &&
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
             requestId,
           })
         : Response.json({ error: "KEY_CONFLICT", requestId }, { status: 409 });
-    const products = await loadCatalog(db);
+    const products = await loadCatalog(db, user.userId);
     const lines = body.items.map((l) => {
       const p = products.find((p) => p.id === l.productId);
       if (!p) throw new Error("UNKNOWN_PRODUCT");
@@ -98,8 +98,10 @@ export async function POST(request: Request) {
     for (const l of lines)
       statements.push(
         db
-          .prepare("UPDATE products SET stock=stock-? WHERE id=?")
-          .bind(l.quantity, l.productId),
+          .prepare(
+            "UPDATE practice_inventory SET stock=stock-? WHERE product_id=? AND user_id=?",
+          )
+          .bind(l.quantity, l.productId, user.userId),
         db
           .prepare(
             "INSERT INTO order_items (id,order_id,product_id,name,price,quantity) VALUES (?,?,?,?,?,?)",
