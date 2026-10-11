@@ -128,6 +128,14 @@ export default function Storefront() {
     if (!ready || cartError.current) throw Error();
   }
   useEffect(() => {
+    // Pasting a continuation URL into an already-open store can be fragment-only navigation.
+    const openNotebook = () => {
+      if (new URLSearchParams(window.location.hash.slice(1)).has("continue")) window.location.reload();
+    };
+    window.addEventListener("hashchange", openNotebook);
+    return () => window.removeEventListener("hashchange", openNotebook);
+  }, []);
+  useEffect(() => {
     if (panel) {
       dialog.current?.showModal();
       setMessage("");
